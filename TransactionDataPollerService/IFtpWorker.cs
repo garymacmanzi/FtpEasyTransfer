@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Models;
+using TransactionDataPollerService.Options;
 
 namespace TransactionDataPollerService
 {

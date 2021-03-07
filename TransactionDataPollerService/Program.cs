@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Models;
+using TransactionDataPollerService.Options;
 using FluentFTP;
 using Serilog;
 
@@ -24,7 +24,7 @@ namespace TransactionDataPollerService
                 .ConfigureServices((hostContext, services) =>
                 {
                     IConfiguration configuration = hostContext.Configuration;
-                    List<TransferSettingsOptions> options = configuration.GetSection("StationDetails").Get<List<TransferSettingsOptions>>();
+                    List<TransferSettingsOptions> options = configuration.GetSection("TransferOptions").Get<List<TransferSettingsOptions>>();
                     services.AddSingleton(options);
                     services.AddTransient<IFtpWorker, FtpWorker>();
 
