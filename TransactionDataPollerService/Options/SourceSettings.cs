@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace TransactionDataPollerService.Options
+namespace FtpEasyTransfer.Options
 {
     public class SourceSettings
     {

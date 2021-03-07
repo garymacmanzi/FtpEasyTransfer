@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Options;
-using TransactionDataPollerService.Helpers;
+using FtpEasyTransfer.Options;
+using FtpEasyTransfer.Helpers;
 
-namespace TransactionDataPollerService
+namespace FtpEasyTransfer
 {
     public class Worker : BackgroundService
     {

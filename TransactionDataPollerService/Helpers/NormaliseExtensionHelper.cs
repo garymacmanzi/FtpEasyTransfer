@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TransactionDataPollerService.Helpers
+namespace FtpEasyTransfer.Helpers
 {
     public static class NormaliseExtensionHelper
     {

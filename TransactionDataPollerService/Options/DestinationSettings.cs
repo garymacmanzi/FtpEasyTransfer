@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TransactionDataPollerService.Options
+namespace FtpEasyTransfer.Options
 {
     public class DestinationSettings
     {

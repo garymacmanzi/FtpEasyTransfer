@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Options;
+using FtpEasyTransfer.Options;
 using System.Net;
 using FluentFTP.Rules;
 using System.Threading;
 using System.Diagnostics;
 using System.IO;
 
-namespace TransactionDataPollerService
+namespace FtpEasyTransfer
 {
     public class FtpWorker : IFtpWorker
     {

@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Options;
+using FtpEasyTransfer.Options;
 using FluentFTP;
 using Serilog;
 
-namespace TransactionDataPollerService
+namespace FtpEasyTransfer
 {
     public class Program
     {

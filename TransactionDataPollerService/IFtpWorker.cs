@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using TransactionDataPollerService.Options;
+using FtpEasyTransfer.Options;
 
-namespace TransactionDataPollerService
+namespace FtpEasyTransfer
 {
     public interface IFtpWorker
     {
