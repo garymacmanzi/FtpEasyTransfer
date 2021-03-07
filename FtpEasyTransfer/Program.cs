@@ -1,12 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FtpEasyTransfer.Options;
-using FluentFTP;
 using Serilog;
 
 namespace FtpEasyTransfer
