@@ -12,7 +12,7 @@ namespace FtpEasyTransfer.Options
         public string RemotePath { get; set; }
         public List<string> FileTypesToDownload { get; set; } = new List<string>();
         public bool DeleteOnceDownloaded { get; set; } = false;
-        public bool OverwriteExisting { get; set; }
+        public bool OverwriteExisting { get; set; } = false;
         public bool RemotePathIsFile
         {
             get

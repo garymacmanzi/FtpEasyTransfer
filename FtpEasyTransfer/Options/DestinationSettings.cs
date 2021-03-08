@@ -10,7 +10,7 @@ namespace FtpEasyTransfer.Options
         public string Password { get; set; }
         public string RemotePath { get; set; }
         public bool DeleteOnceUploaded { get; set; } = false;
-        public bool OverwriteExisting { get; set; }
+        public bool OverwriteExisting { get; set; } = false;
         public bool RemotePathIsFile 
         {
             get
