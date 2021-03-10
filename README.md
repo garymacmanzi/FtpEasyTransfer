@@ -17,7 +17,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
     },
     "Serilog": {
         "Using": [ "Serilog.Sinks.File" ],
-
+        "MinimumLevel": "Warning",
         "WriteTo:File": {
             "Name": "File",
             "Args": {
