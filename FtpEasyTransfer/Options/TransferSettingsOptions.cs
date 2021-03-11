@@ -7,8 +7,8 @@ namespace FtpEasyTransfer.Options
     {
         public string LocalPath { get; set; }
         public List<ChangeExtensionsOptions> ChangeExtensions { get; set; } = new List<ChangeExtensionsOptions>();
-        public SourceSettings Source { get; set; }
-        public DestinationSettings Destination { get; set; }
+        public TransferDetails Source { get; set; }
+        public TransferDetails Destination { get; set; }
         public bool LocalPathIsFile
         {
             get
@@ -16,5 +16,6 @@ namespace FtpEasyTransfer.Options
                 return !string.IsNullOrEmpty(Path.GetExtension(LocalPath));
             }
         }
+        public RunMode RunMode { get; set; }
     }
 }

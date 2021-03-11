@@ -17,30 +17,31 @@ namespace FtpEasyTransfer
         private readonly List<TransferSettingsOptions> _options;
         private readonly IFtpWorker _ftpWorker;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly IRunModeRetriever _modeRetriever;
         private readonly ILogger<Worker> _logger;
         private readonly IConfiguration _config;
 
         public Worker(ILogger<Worker> logger, IConfiguration config, IOptions<List<TransferSettingsOptions>> options,
-            IFtpWorker ftpWorker, IHostApplicationLifetime hostApplicationLifetime)
+            IFtpWorker ftpWorker, IHostApplicationLifetime hostApplicationLifetime, IRunModeRetriever modeRetriever)
         {
             _logger = logger;
             _config = config;
             _options = options.Value;
             _ftpWorker = ftpWorker;
             _hostApplicationLifetime = hostApplicationLifetime;
+            _modeRetriever = modeRetriever;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting service at: {time}", DateTimeOffset.Now);
-
+            ValidateSettings();
+            _logger.LogInformation("Settings validated");
             return base.StartAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            ValidateSettings();
-
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
@@ -76,12 +77,12 @@ namespace FtpEasyTransfer
 
                 if (item.Source is not null)
                 {
-                    foreach (var fileType in item.Source.FileTypesToDownload)
+                    foreach (var fileType in item.Source.FileTypesToTransfer)
                     {
                         normalisedExtensions.Add(fileType.Normalise());
                     }
 
-                    item.Source.FileTypesToDownload = normalisedExtensions;
+                    item.Source.FileTypesToTransfer = normalisedExtensions;
                 }
 
                 foreach (var ext in item.ChangeExtensions)
@@ -92,6 +93,8 @@ namespace FtpEasyTransfer
                         _hostApplicationLifetime.StopApplication();
                     }
                 }
+
+                item.RunMode = _modeRetriever.RetrieveRunMode(item);
             }
         }
     }

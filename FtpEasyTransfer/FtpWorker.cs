@@ -7,6 +7,7 @@ using FtpEasyTransfer.Options;
 using FluentFTP.Rules;
 using System.Threading;
 using System.IO;
+using FtpEasyTransfer.Helpers;
 
 namespace FtpEasyTransfer
 {
@@ -31,104 +32,57 @@ namespace FtpEasyTransfer
                 Directory.CreateDirectory(_options.LocalPath);
             }
 
-            switch (DetermineRunMode())
+            try
             {
-                case RunMode.DownloadDir:
-                    await RunDownloadDirAsync();
-                    break;
-                case RunMode.DownloadFile:
-                    await RunDownloadFileAsync();
-                    break;
-                case RunMode.UploadDir:
-                    await RunUploadDirAsync();
-                    break;
-                case RunMode.UploadFile:
-                    await RunUploadFileAsync();
-                    break;
-                case RunMode.SyncDirs:
-                    await RunSyncDirsAsync();
-                    break;
-                case RunMode.SyncFile:
-                    await RunSyncFileAsync();
-                    break;
-                default:
-                    break;
-            };
-        }
-
-        private Task RunDownloadDirAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        private Task RunDownloadFileAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        private Task RunUploadDirAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        private async Task RunUploadFileAsync()
-        {
-            if (_options.Destination != null && !string.IsNullOrWhiteSpace(_options.Destination.Server))
-            {
-                try
+                switch (options.RunMode)
                 {
-                    await UploadFileToDestinationAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Exception in RunUploadFileAsync: {Message}", ex.Message);
-                }
+                    case RunMode.DownloadDir:
+                        await DownloadDirectoryFromSourceAsync();
+                        break;
+                    case RunMode.DownloadFile:
+                        await DownloadFileFromSourceAsync();
+                        break;
+                    case RunMode.UploadDir:
+                        await UploadDirectoryToDestinationAsync();
+                        break;
+                    case RunMode.UploadFile:
+                        await UploadFileToDestinationAsync();
+                        break;
+                    case RunMode.SyncDirs:
+                        await RunSyncDirsAsync();
+                        break;
+                    case RunMode.SyncFile:
+                        await RunSyncFileAsync();
+                        break;
+                    default:
+                        break;
+                };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("Exception: {Message}", ex.Message);
+                _logger.LogError("Stack Trace: {StackTrace}", ex.StackTrace);
+            }
+
         }
 
         private async Task RunSyncDirsAsync()
         {
-            if (_options.Source != null || !string.IsNullOrWhiteSpace(_options.Source.Server))
-            {
-                try
-                {
-                    await DownloadDirectoryFromSourceAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Exception in DownloadFromSource: {Message}", ex.Message);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("No source configured.");
-            }
+            await DownloadDirectoryFromSourceAsync();
 
-            foreach (var opt in _options.ChangeExtensions)
-            {
-                ChangeFileExtensions(opt);
-            }
+            ChangeFileExtensions(_options.ChangeExtensions);
 
-            if (_options.Destination != null || !string.IsNullOrWhiteSpace(_options.Destination.Server))
-            {
-                try
-                {
-                    await UploadDirectoryToDestinationAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Exception in UploadToDestination: {Message}", ex.Message);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("No destination configured.");
-            }
+            await UploadDirectoryToDestinationAsync();
+
         }
 
-        private Task RunSyncFileAsync()
+        private async Task RunSyncFileAsync()
         {
-            throw new NotImplementedException();
+            await DownloadFileFromSourceAsync();
+
+            ChangeFileExtensions(_options.ChangeExtensions);
+
+            await UploadFileToDestinationAsync();
         }
 
         private async Task<List<FtpResult>> DownloadDirectoryFromSourceAsync()
@@ -136,7 +90,7 @@ namespace FtpEasyTransfer
             var token = new CancellationToken();
 
 
-            using (var ftp = new FtpClient(_options.Source.Server, _options.Source.Port, _options.Source.User, _options.Source.Password))
+            using (var ftp = CreateFtpClient(_options.Source))
             {
                 ftp.OnLogEvent += Log;
 
@@ -144,13 +98,13 @@ namespace FtpEasyTransfer
 
                 var rules = new List<FtpRule>
                 {
-                    new FtpFileExtensionRule(true, _options.Source.FileTypesToDownload)
+                    new FtpFileExtensionRule(true, _options.Source.FileTypesToTransfer)
                 };
 
                 var results = await ftp.DownloadDirectoryAsync(_options.LocalPath, _options.Source.RemotePath, FtpFolderSyncMode.Update,
                     FtpLocalExists.Skip, FtpVerify.None, rules);
 
-                if (_options.Source.DeleteOnceDownloaded)
+                if (_options.Source.DeleteOnceTransferred)
                 {
                     foreach (var download in results)
                     {
@@ -173,28 +127,73 @@ namespace FtpEasyTransfer
             }
         }
 
-        private void ChangeFileExtensions(ChangeExtensionsOptions options)
+        private async Task<FtpStatus> DownloadFileFromSourceAsync()
         {
-            foreach (var file in Directory.GetFiles(_localDirectory, $"*.{options.Source}"))
+            var token = new CancellationToken();
+
+            using (var ftp = CreateFtpClient(_options.Source))
             {
-                var newFileName = @$"{_localDirectory}\{Path.GetFileNameWithoutExtension(file)}.{options.Target}";
-                try
+                ftp.OnLogEvent += Log;
+
+                await ftp.ConnectAsync(token);
+
+                var overwriteExisting = _options.Source.OverwriteExisting ? FtpLocalExists.Overwrite : FtpLocalExists.Skip;
+
+                string localPath = _options.Destination.RemotePath;
+
+                if (!_options.LocalPathIsFile)
                 {
-                    File.Move(file, newFileName, true);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning("Moving file {file} failed: {Message}", file, ex.Message);
+                    var fileName = Path.GetFileName(_options.Source.RemotePath);
+                    localPath = $"{_options.LocalPath}/{fileName}";
                 }
 
+                var result = await ftp.DownloadFileAsync(localPath, _options.Source.RemotePath, overwriteExisting);
+
+                if (_options.Source.DeleteOnceTransferred)
+                {
+                    if (result.IsSuccess())
+                    {
+                        try
+                        {
+                            await ftp.DeleteFileAsync(_options.Source.RemotePath, token);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning("Error deleting {RemotePath}: {Message}", _options.Source.RemotePath, ex.Message);
+                        }
+                    }
+                }
+
+                return result;
             }
+        }
+
+        private void ChangeFileExtensions(List<ChangeExtensionsOptions> options)
+        {
+            foreach (var item in options)
+            {
+                foreach (var file in Directory.GetFiles(_localDirectory, $"*.{item.Source}"))
+                {
+                    var newFileName = @$"{_localDirectory}\{Path.GetFileNameWithoutExtension(file)}.{item.Target}";
+                    try
+                    {
+                        File.Move(file, newFileName, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Moving file {file} failed: {Message}", file, ex.Message);
+                    }
+
+                }
+            }
+            
         }
 
         private async Task<FtpStatus> UploadFileToDestinationAsync()
         {
             var token = new CancellationToken();
 
-            using (var ftp = new FtpClient(_options.Destination.Server, _options.Destination.Port, _options.Destination.User, _options.Destination.Password))
+            using (var ftp = CreateFtpClient(_options.Destination))
             {
                 ftp.OnLogEvent += Log;
 
@@ -212,7 +211,7 @@ namespace FtpEasyTransfer
 
                 var result = await ftp.UploadFileAsync(_options.LocalPath, remotePath, overwriteExisting);
 
-                if (_options.Destination.DeleteOnceUploaded)
+                if (_options.Destination.DeleteOnceTransferred)
                 {
                     if (result.IsSuccess())
                     {
@@ -238,93 +237,56 @@ namespace FtpEasyTransfer
         {
             var token = new CancellationToken();
 
-            using (var ftp = new FtpClient(_options.Destination.Server, _options.Destination.Port, _options.Destination.User, _options.Destination.Password))
+            using (var ftp = CreateFtpClient(_options.Destination))
             {
                 ftp.OnLogEvent += Log;
+
+                var rules = new List<FtpRule>
+                {
+                    new FtpFileExtensionRule(true, _options.Destination.FileTypesToTransfer)
+                };
+
+                var overwriteExisting = _options.Destination.OverwriteExisting ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
 
                 await ftp.ConnectAsync(token);
 
                 var results = await ftp.UploadDirectoryAsync(_options.LocalPath, _options.Destination.RemotePath, FtpFolderSyncMode.Update,
-                    FtpRemoteExists.Skip, FtpVerify.None);
+                    overwriteExisting, FtpVerify.None, rules);
 
-                if (_options.Destination.DeleteOnceUploaded)
-                {
-                    foreach (var upload in results)
-                    {
-                        if (upload.IsSuccess)
-                        {
-                            try
-                            {
-                                File.Delete(upload.LocalPath);
-                                _logger.LogInformation("File deleted: {LocalPath}", upload.LocalPath);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogWarning("Error deleting file {LocalPath}: {Message}", upload.LocalPath, ex.Message);
-                            }
-
-                        }
-                    }
-                }
-
-                foreach (var upload in results)
-                {
-                    if (upload.IsFailed)
-                    {
-                        _logger.LogWarning("Upload of {LocalPath} failed: {Exception}", upload.LocalPath, upload.Exception);
-                    }
-                }
+                await ValidateResults(results, ftp, _options.Destination.DeleteOnceTransferred);
 
                 return results;
             }
         }
 
-        private RunMode DetermineRunMode()
+        private async Task ValidateResults(List<FtpResult> results, FtpClient ftp, bool deleteIfSuccess)
         {
-            if (_options.LocalPathIsFile)
+            foreach (var result in results)
             {
-                _logger.LogDebug("Local Path: {LocalPath} is file, RunMode determined as UploadFile", _options.LocalPath);
-                return RunMode.UploadFile;
-            }
-            else if (_options.Source is not null && _options.Destination is not null)
-            {
-                if (_options.Source.RemotePathIsFile)
+                if (result.IsSuccess)
                 {
-                    _logger.LogDebug("Source & Destination defined, Source.RemotePath: {RemotePath} is file, RunMode determined as SyncFile", _options.Source.RemotePath);
-                    return RunMode.SyncFile;
+                    if (deleteIfSuccess)
+                    {
+                        if (result.IsDownload && result.Type == FtpFileSystemObjectType.File)
+                        {
+                            await ftp.DeleteFileAsync(result.RemotePath);
+                        }
+                        else if (result.Type == FtpFileSystemObjectType.File)
+                        {
+                            File.Delete(result.LocalPath);
+                        }
+                    }
                 }
                 else
                 {
-                    _logger.LogDebug("Source & Destination defined, Source.RemotePath: {RemotePath} is directory, RunMode determined as SyncDirs", _options.Source.RemotePath);
-                    return RunMode.SyncDirs;
+                    _logger.LogWarning("Transfer of {Name} failed, reason: {Exception}", result.Name, result.Exception);
                 }
             }
-            else if (_options.Source is null && _options.Destination is not null)
-            {
-                if (_options.Destination.RemotePathIsFile)
-                {
-                    _logger.LogDebug("Only Destination defined, Destination.RemotePath: {RemotePath} is file, RunMode determined as UploadFile", _options.Destination.RemotePath);
-                    return RunMode.UploadFile;
-                }
-                else
-                {
-                    _logger.LogDebug("Only Destination defined, Destination.RemotePath: {RemotePath} is directory, RunMode determined as UploadDir", _options.Destination.RemotePath);
-                    return RunMode.UploadDir;
-                }
-            }
-            else
-            {
-                if (_options.Source.RemotePathIsFile)
-                {
-                    _logger.LogDebug("Only Source defined, Source.RemotePath: {RemotePath} is file, RunMode determined as DownloadFile", _options.Source.RemotePath);
-                    return RunMode.DownloadFile;
-                }
-                else
-                {
-                    _logger.LogDebug("Only Source defined, Source.RemotePath: {RemotePath} is directory, RunMode determined as DownloadDir", _options.Source.RemotePath);
-                    return RunMode.DownloadDir;
-                }
-            }
+        }
+
+        private static FtpClient CreateFtpClient(TransferDetails details)
+        {
+            return new FtpClient(details.Server, details.Port, details.User, details.Password);
         }
 
         private void Log(FtpTraceLevel traceLevel, string content)
@@ -346,16 +308,6 @@ namespace FtpEasyTransfer
                 default:
                     break;
             }
-        }
-
-        private enum RunMode
-        {
-            DownloadDir,
-            DownloadFile,
-            UploadDir,
-            UploadFile,
-            SyncDirs,
-            SyncFile
         }
     }
 }

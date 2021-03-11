@@ -23,10 +23,8 @@ namespace FtpEasyTransfer
                 {
                     IConfiguration configuration = hostContext.Configuration;
                     services.Configure<List<TransferSettingsOptions>>(configuration.GetSection("TransferOptions"));
-                    // List<TransferSettingsOptions> options = configuration.GetSection("TransferOptions").Get<List<TransferSettingsOptions>>();
-                    // services.AddSingleton(options);
                     services.AddTransient<IFtpWorker, FtpWorker>();
-
+                    services.AddTransient<IRunModeRetriever, RunModeRetriever>();
                     services.AddHostedService<Worker>();
                 })
                 .ConfigureLogging((hostContext, logging) =>
