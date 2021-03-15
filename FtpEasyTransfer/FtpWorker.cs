@@ -62,8 +62,16 @@ namespace FtpEasyTransfer
 
         private void ValidateSettings()
         {
-            // TODO: Check this isn't a string
-            _pollFrequency = _config.GetValue<int>("PollFrequency");
+            try
+            {
+                _pollFrequency = _config.GetValue<int>("PollFrequency");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("Unable to retrieve poll frequency: {Message}", ex.Message);
+                _hostApplicationLifetime.StopApplication();
+            }
+            
 
             foreach (var item in _options)
             {
@@ -309,18 +317,15 @@ namespace FtpEasyTransfer
         {
             foreach (var result in results)
             {
-                if (result.IsSuccess)
+                if (result.IsSuccess && deleteIfSuccess)
                 {
-                    if (deleteIfSuccess)
+                    if (result.IsDownload && result.Type == FtpFileSystemObjectType.File)
                     {
-                        if (result.IsDownload && result.Type == FtpFileSystemObjectType.File)
-                        {
-                            await ftp.DeleteFileAsync(result.RemotePath);
-                        }
-                        else if (result.Type == FtpFileSystemObjectType.File)
-                        {
-                            File.Delete(result.LocalPath);
-                        }
+                        await ftp.DeleteFileAsync(result.RemotePath);
+                    }
+                    else if (result.Type == FtpFileSystemObjectType.File)
+                    {
+                        File.Delete(result.LocalPath);
                     }
                 }
                 else if (result.IsFailed)
