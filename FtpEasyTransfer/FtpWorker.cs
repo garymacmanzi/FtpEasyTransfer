@@ -142,10 +142,10 @@ namespace FtpEasyTransfer
             catch (Exception ex)
             {
                 _logger.LogError("Exception: {Message}", ex.Message);
-                _logger.LogError("Stack Trace: {StackTrace}", ex.StackTrace);
+                _logger.LogDebug("Stack Trace: {StackTrace}", ex.StackTrace);
                 if (ex.InnerException is not null)
                 {
-                    _logger.LogError("Inner exception: {InnerException}", ex.InnerException);
+                    _logger.LogDebug("Inner exception: {InnerException}", ex.InnerException);
                 }
             }
 
