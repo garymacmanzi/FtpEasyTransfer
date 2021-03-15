@@ -47,7 +47,6 @@ namespace FtpEasyTransfer
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 _logger.LogInformation("Poll Frequency (ms): {frequency}", _config.GetValue<int>("PollFrequency"));
 
-                _logger.LogInformation("Running through options: {Count}, LocalPath of 0: {LocalPath}", _options.Count, _options[0].LocalPath);
                 foreach (var option in _options)
                 {
                     await _ftpWorker.RunAsync(option);
