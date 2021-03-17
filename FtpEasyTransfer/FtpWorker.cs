@@ -242,14 +242,18 @@ namespace FtpEasyTransfer
         {
             foreach (var item in transfer.ChangeExtensions)
             {
-                var targetFileName = @$"{transfer.LocalPath}\{Path.GetFileNameWithoutExtension(localFilePath)}.{item.Target}";
-                try
+                if (item.Source.Equals(Path.GetExtension(localFilePath).TrimStart('.')))
                 {
-                    File.Move(localFilePath, targetFileName, true);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning("Moving file {file} failed: {Message}", localFilePath, ex.Message);
+                    var targetFileName = @$"{transfer.LocalPath}\{Path.GetFileNameWithoutExtension(localFilePath)}.{item.Target}";
+
+                    try
+                    {
+                        File.Move(localFilePath, targetFileName, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Moving file {file} failed: {Message}", localFilePath, ex.Message);
+                    }
                 }
             }
         }
@@ -295,18 +299,23 @@ namespace FtpEasyTransfer
             {
                 ftp.OnLogEvent += Log;
 
-                var rules = new List<FtpRule>
+                var rules = new List<FtpRule>();
+
+                if (transfer.Destination.FileTypesToTransfer.Count > 0)
                 {
-                    new FtpFileExtensionRule(true, transfer.Destination.FileTypesToTransfer)
-                };
+                    rules.Add(new FtpFileExtensionRule(true, transfer.Destination.FileTypesToTransfer));
+                }
 
                 var overwriteExisting = transfer.Destination.OverwriteExisting ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
 
+                _logger.LogInformation("Connecting to {Server}", transfer.Destination.Server);
                 await ftp.ConnectAsync(token);
 
+                _logger.LogInformation("Uploading {LocalPath} to {RemotePath}", transfer.LocalPath, transfer.Destination.RemotePath);
                 var results = await ftp.UploadDirectoryAsync(transfer.LocalPath, transfer.Destination.RemotePath, FtpFolderSyncMode.Update,
                     overwriteExisting, FtpVerify.None, rules);
 
+                _logger.LogInformation("Verifying {Count} upload(s)", results?.Count);
                 await ValidateFtpResultList(results, ftp, transfer.Destination.DeleteOnceTransferred);
 
                 return results;
