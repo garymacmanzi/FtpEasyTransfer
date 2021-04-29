@@ -49,7 +49,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
                 "RemotePath": "/download/",
                 "FileTypesToDownload": [ "mkv", "avi" ],
                 "OverwriteExisting": false,
-                "DeleteOnceDownloaded": true
+                "DeleteOnceTransferred": true
             },
             "Destination": {
                 "Server": "another.ftp.server",
@@ -58,7 +58,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
                 "Password": "password",
                 "RemotePath": "/your/remote/path/",
                 "OverwriteExisting": true,
-                "DeleteOnceUploaded": false
+                "DeleteOnceTransferred": false
             }
         }
     ]
@@ -96,7 +96,7 @@ Example:
                 "RemotePath": "/download/",
                 "FileTypesToDownload": [ "mkv", "avi" ],
                 "OverwriteExisting": false,
-                "DeleteOnceDownloaded": true
+                "DeleteOnceTransferred": true
             },
             "Destination": {
                 "Server": "another.ftp.server",
@@ -105,7 +105,7 @@ Example:
                 "Password": "password",
                 "RemotePath": "/your/remote/path/",
                 "OverwriteExisting": true,
-                "DeleteOnceUploaded": false
+                "DeleteOnceTransferred": false
             }
         }
     ]
@@ -154,4 +154,59 @@ Each TransferOptions object can contain either one or both of Source/Destination
 IP/host address of FTP server
 ```json
 "Server": "ftp.someserver.com"
+```
+
+##### Port - Optional - int
+Port of FTP server. Defaults to 21 if not defined.
+```json
+"Port": 21
+```
+
+##### User - Mandatory - string
+Username for FTP server. Use "anonymous" if no user
+```json
+"User": "username"
+```
+
+##### Password - Mandatory - string
+Password for FTP server. Use "" if anonymous
+```json
+"Password": "password123"
+```
+
+##### RemotePath - Mandatory - string
+Remote path to either file or directory to be downloaded/uploaded. If directory, use trailing ```/```
+```json
+"RemotePath": "/server/file.txt"
+```
+```json
+"RemotePath": "/server/directory_to_sync/"
+```
+
+##### OverwriteExisting - Optional - bool
+If ```true```, will overwrite existing files when downloading/uploading. If in Source, will overwrite local files with files from server. If in Destination, will overwrite files on server with local files.
+
+If ```false```, Source will ignore any local files matching files on server. Destination will ignore any remote files matching locally.
+
+Default: ```false```
+```json
+"OverwriteExisting": true
+```
+
+##### DeleteOnceTransferred - Optional - bool
+If ```true```, will delete any files from ```Source```/```Desintation``` if they have been transferred successfully. Only applies to files actually transferred, not any pre-existing files.
+
+Default: ```false```
+```json
+"DeleteOnceTransferred": true
+```
+
+##### FolderSyncMode - Optional - enum
+Can be set to either ```"Update"``` or ```"Mirror"```
+```Mirror```: Dangerous - Uploads/downloads all the missing files to update the server/local filesystem. Deletes the extra files to ensure that the target is an exact mirror of the source/destination.
+```Update```: Safer method - Uploads/downloads all the missing files to update the server/local filesystem.
+
+Default: ```"Update"```
+```json
+"FolderSyncMode": "Mirror"
 ```
