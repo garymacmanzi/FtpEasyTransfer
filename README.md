@@ -76,14 +76,35 @@ Transfer Options contains an array of settings options - the service will work t
 #### Local Path - Mandatory - string (file or directory path)
 A local path must be specified for each transfer, regardless of the type of transfer being performed - even when syncing one FTP server to another, the directory must be specified as a temporary location whilst transferring files across. Use only `/` path separators, even in Windows paths.
 
-Example:
+Examples:
 ```json
 "LocalPath": "C:/FtpEasyTransfer"
 ```
-or
 ```json
 "LocalPath": "C:/FtpEasyTransfer/file.txt"
 ```
 
 #### ChangeExtensions - Optional - array
 Contains a list of ChangeExtension objects - each object must contain a source file extension and target file extension. Extensions are not case sensitive, do not include the ```.``` or any wildcard symbols.
+
+Examples:
+```json
+"ChangeExtensions": [
+    {
+        "Source": "txt",
+        "Target": "text"
+    }
+]
+```
+```json
+"ChangeExtensions": [
+    {
+        "Source": "jpg",
+        "Target": "jpeg"
+    },
+    {
+        "Source": "mpeg",
+        "Target": "mpg"
+    }
+]
+```
