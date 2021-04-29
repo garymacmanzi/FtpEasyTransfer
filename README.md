@@ -70,8 +70,46 @@ The Serilog section can be configured as per [Serilog.Settings.Configuration](ht
 ### Poll Frequency - Mandatory
 The time in milliseconds between the end of the last task and the start of the next
 
-### Transfer Options - Mandatory
+### Transfer Options - Mandatory - array
 Transfer Options contains an array of settings options - the service will work through these in order from top to bottom.
+
+Example:
+```json
+"TransferOptions": [
+        {
+            "LocalPath": "C:/FtpEasyTransfer",
+            "ChangeExtensions": [
+                {
+                    "Source": "jpeg",
+                    "Target": "jpg"
+                },
+                {
+                    "Source": "xls",
+                    "Target": "xlsx"
+                }
+            ],
+            "Source": {
+                "Server": "your.ftp.server",
+                "Port": 0,
+                "User": "username",
+                "Password": "password",
+                "RemotePath": "/download/",
+                "FileTypesToDownload": [ "mkv", "avi" ],
+                "OverwriteExisting": false,
+                "DeleteOnceDownloaded": true
+            },
+            "Destination": {
+                "Server": "another.ftp.server",
+                "Port": 0,
+                "User": "username",
+                "Password": "password",
+                "RemotePath": "/your/remote/path/",
+                "OverwriteExisting": true,
+                "DeleteOnceUploaded": false
+            }
+        }
+    ]
+```
 
 #### Local Path - Mandatory - string (file or directory path)
 A local path must be specified for each transfer, regardless of the type of transfer being performed - even when syncing one FTP server to another, the directory must be specified as a temporary location whilst transferring files across. Use only `/` path separators, even in Windows paths.
@@ -107,4 +145,13 @@ Examples:
         "Target": "mpg"
     }
 ]
+```
+
+#### Source/Destination - Mandatory (At least one) - object
+Each TransferOptions object can contain either one or both of Source/Destination. These objects are configured identically.
+
+##### Server - Mandatory - string
+IP/host address of FTP server
+```json
+"Server": "ftp.someserver.com"
 ```
