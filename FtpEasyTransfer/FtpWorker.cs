@@ -100,6 +100,9 @@ namespace FtpEasyTransfer
                         _logger.LogCritical("Invalid or empty extension source/target in \"ChangeExtensions\". Check appsettings.json");
                         _hostApplicationLifetime.StopApplication();
                     }
+
+                    ext.Source = ext.Source.Normalise();
+                    ext.Target = ext.Target.Normalise();
                 }
 
                 item.RunMode = _modeRetriever.RetrieveRunMode(item);
@@ -182,15 +185,17 @@ namespace FtpEasyTransfer
                 ftp.OnLogEvent += Log;
                 await ftp.ConnectAsync(token);
 
-                var rules = new List<FtpRule>
+                var rules = new List<FtpRule>();
+
+                if (transfer.Source.FileTypesToTransfer.Count > 0)
                 {
-                    new FtpFileExtensionRule(true, transfer.Source.FileTypesToTransfer)
-                };
+                    rules.Add(new FtpFileExtensionRule(true, transfer.Source.FileTypesToTransfer));
+                }
 
                 var overwriteExisting = transfer.Source.OverwriteExisting ? FtpLocalExists.Overwrite : FtpLocalExists.Skip;
 
-                var results = await ftp.DownloadDirectoryAsync(transfer.LocalPath, transfer.Source.RemotePath, FtpFolderSyncMode.Update,
-                    overwriteExisting, FtpVerify.None, rules);
+                var results = await ftp.DownloadDirectoryAsync(transfer.LocalPath, transfer.Source.RemotePath, transfer.Source.FolderSyncMode,
+                                                               overwriteExisting, FtpVerify.None, rules);
 
                 await ValidateFtpResultList(results, ftp, transfer.Source.DeleteOnceTransferred);
 
@@ -232,7 +237,7 @@ namespace FtpEasyTransfer
 
         private void ChangeFileExtensions(TransferSettingsOptions transfer, List<FtpResult> results)
         {
-            foreach (var file in results.Where(x => x.IsSuccess))
+            foreach (var file in results.Where(x => x.Type == FtpFileSystemObjectType.File).Where(x => x.IsSuccess))
             {
                 ChangeFileExtensions(transfer, file.LocalPath);
             }            
@@ -242,7 +247,7 @@ namespace FtpEasyTransfer
         {
             foreach (var item in transfer.ChangeExtensions)
             {
-                if (item.Source.Equals(Path.GetExtension(localFilePath).TrimStart('.')))
+                if (item.Source.Equals(Path.GetExtension(localFilePath).TrimStart('.').ToLower()))
                 {
                     var targetFileName = @$"{transfer.LocalPath}\{Path.GetFileNameWithoutExtension(localFilePath)}.{item.Target}";
 
@@ -312,10 +317,10 @@ namespace FtpEasyTransfer
                 await ftp.ConnectAsync(token);
 
                 _logger.LogInformation("Uploading {LocalPath} to {RemotePath}", transfer.LocalPath, transfer.Destination.RemotePath);
-                var results = await ftp.UploadDirectoryAsync(transfer.LocalPath, transfer.Destination.RemotePath, FtpFolderSyncMode.Update,
-                    overwriteExisting, FtpVerify.None, rules);
 
-                _logger.LogInformation("Verifying {Count} upload(s)", results?.Count);
+                var results = await ftp.UploadDirectoryAsync(transfer.LocalPath, transfer.Destination.RemotePath,
+                                                             transfer.Destination.FolderSyncMode, overwriteExisting, FtpVerify.None, rules);
+
                 await ValidateFtpResultList(results, ftp, transfer.Destination.DeleteOnceTransferred);
 
                 return results;

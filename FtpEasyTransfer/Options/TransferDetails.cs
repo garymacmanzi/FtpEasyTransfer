@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using FluentFTP;
+using System.Collections.Generic;
 using System.IO;
 
 namespace FtpEasyTransfer.Options
@@ -13,6 +14,7 @@ namespace FtpEasyTransfer.Options
         public List<string> FileTypesToTransfer { get; set; } = new List<string>();
         public bool DeleteOnceTransferred { get; set; } = false;
         public bool OverwriteExisting { get; set; } = false;
+        public FtpFolderSyncMode FolderSyncMode { get; set; } = FtpFolderSyncMode.Update;
         public bool RemotePathIsFile
         {
             get

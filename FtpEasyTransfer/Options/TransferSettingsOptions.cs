@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using FluentFTP;
+using System.Collections.Generic;
 using System.IO;
 
 namespace FtpEasyTransfer.Options

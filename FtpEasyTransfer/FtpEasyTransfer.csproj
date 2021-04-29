@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>dotnet-TransactionDataPollerService-F3ABD7F9-426A-47A2-898B-AF36A9DA5CD4</UserSecretsId>
+    <Version>1.0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
