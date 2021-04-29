@@ -21,7 +21,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
         "WriteTo:File": {
             "Name": "File",
             "Args": {
-                "path": "C:\\poller\\logs\\log-.txt",
+                "path": "C:/poller/logs/log-.txt",
                 "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 "rollingInterval": "Day"
             }
@@ -30,7 +30,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
     "PollFrequency": 900000,
     "TransferOptions": [
         {
-            "LocalPath": "C:\\FtpEasyTransfer",
+            "LocalPath": "C:/FtpEasyTransfer",
             "ChangeExtensions": [
                 {
                     "Source": "jpeg",
@@ -52,7 +52,7 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
                 "DeleteOnceDownloaded": true
             },
             "Destination": {
-                "Server": "your.ftp.server",
+                "Server": "another.ftp.server",
                 "Port": 0,
                 "User": "username",
                 "Password": "password",
@@ -72,3 +72,6 @@ The time in milliseconds between the end of the last task and the start of the n
 
 ### Transfer Options
 Transfer Options contains an array of settings options - the service will work through these in order from top to bottom.
+
+#### Local Path
+
