@@ -203,7 +203,9 @@ Default: ```false```
 
 ##### FolderSyncMode - Optional - enum
 Can be set to either ```"Update"``` or ```"Mirror"```
+
 ```Mirror```: Dangerous - Uploads/downloads all the missing files to update the server/local filesystem. Deletes the extra files to ensure that the target is an exact mirror of the source/destination.
+
 ```Update```: Safer method - Uploads/downloads all the missing files to update the server/local filesystem.
 
 Default: ```"Update"```
