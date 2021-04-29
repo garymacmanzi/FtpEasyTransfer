@@ -64,14 +64,26 @@ Usage is straightforward, simply configure the "TransferOptions" section of apps
     ]
 }
 ```
-### Serilog
+### Serilog - Optional
 The Serilog section can be configured as per [Serilog.Settings.Configuration](https://github.com/serilog/serilog-settings-configuration)
 
-### Poll Frequency
+### Poll Frequency - Mandatory
 The time in milliseconds between the end of the last task and the start of the next
 
-### Transfer Options
+### Transfer Options - Mandatory
 Transfer Options contains an array of settings options - the service will work through these in order from top to bottom.
 
-#### Local Path
+#### Local Path - Mandatory - string (file or directory path)
+A local path must be specified for each transfer, regardless of the type of transfer being performed - even when syncing one FTP server to another, the directory must be specified as a temporary location whilst transferring files across. Use only `/` path separators, even in Windows paths.
 
+Example:
+```json
+"LocalPath": "C:/FtpEasyTransfer"
+```
+or
+```json
+"LocalPath": "C:/FtpEasyTransfer/file.txt"
+```
+
+#### ChangeExtensions - Optional - array
+Contains a list of ChangeExtension objects - each object must contain a source file extension and target file extension. Extensions are not case sensitive, do not include the ```.``` or any wildcard symbols.
